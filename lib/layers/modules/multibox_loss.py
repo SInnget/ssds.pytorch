@@ -52,17 +52,30 @@ class MultiBoxLoss(nn.Module):
                 shape: [batch_size,num_objs,5] (last idx is the label).
         """
         loc_data, conf_data = predictions
-        num = loc_data.size(0)
-        priors = self.priors
-        # priors = priors[:loc_data.size(1), :]
-        num_priors = (priors.size(0))
-        num_classes = self.num_classes
+        # print('loc size',  loc_data.size())
+        # print('conf size', conf_data.size())
 
+        num = loc_data.size(0) # batch size
+        # print('targets size: ', len(targets) )  = 32
+
+        # print('targets size: ', targets[0].size() ) = 32*  3* 5
+        # print('targets size: ', targets[0] )   3 ground truth per image
+
+        priors = self.priors
+        # print('priors: ',  priors)
+        # print('priors size: ',  priors.size())  # anchor boxes: 2990
+        # priors = priors[:loc_data.size(1), :]  2990x4
+        num_priors = (priors.size(0))
+        # print('num priors', num_priors) # 2990
+
+        num_classes = self.num_classes # 21
+        # print('num classes: ', num_classes)
         # match priors (default boxes) and ground truth boxes
-        loc_t = torch.Tensor(num, num_priors, 4)
-        conf_t = torch.LongTensor(num, num_priors)
+        loc_t = torch.Tensor(num, num_priors, 4) # 32 x 2990 x 4
+        conf_t = torch.LongTensor(num, num_priors) # 32 * 2990
         for idx in range(num):
             truths = targets[idx][:,:-1].data
+            # print(truths.size()) # varies
             labels = targets[idx][:,-1].data
             defaults = priors.data
             match(self.threshold,truths,defaults,self.variance,labels,loc_t,conf_t,idx)
@@ -71,31 +84,45 @@ class MultiBoxLoss(nn.Module):
             conf_t = conf_t.cuda()
         # wrap targets
         loc_t = Variable(loc_t, requires_grad=False)
+        # print('loc_t size: ', loc_t.size())
         conf_t = Variable(conf_t,requires_grad=False)
-
+        # print('conf_t size: ', conf_t.size())
         pos = conf_t > 0
+
+        # print(pos)
+        # print('pos size: ',  pos.size())
         # num_pos = pos.sum()
 
         # Localization Loss (Smooth L1)
         # Shape: [batch,num_priors,4]
         pos_idx = pos.unsqueeze(pos.dim()).expand_as(loc_data)
+        # print('pos_idx: ',pos_idx.size())
         loc_p = loc_data[pos_idx].view(-1,4)
+        # print('loc_p: ',loc_p.size())
         loc_t = loc_t[pos_idx].view(-1,4)
+        # print('loc t :', loc_t.size())
         loss_l = F.smooth_l1_loss(loc_p, loc_t, size_average=False)
 
         # Compute max conf across batch for hard negative mining
         batch_conf = conf_data.view(-1, self.num_classes)
+        # print('batch conf: ', batch_conf.size())
         loss_c = log_sum_exp(batch_conf) - batch_conf.gather(1, conf_t.view(-1,1))
-
+        # print('loss_c shape', loss_c.size())
         # Hard Negative Mining
-        loss_c[pos] = 0 # filter out pos boxes for now
+        pos1 = pos.view(-1, 1)
+
+        # print('pos shape', pos.size(), '\n')
+        loss_c[pos1] = 0 # filter out pos boxes for now
         loss_c = loss_c.view(num, -1)
+        # print('loss_c shape', loss_c.size())
         _,loss_idx = loss_c.sort(1, descending=True)
         _,idx_rank = loss_idx.sort(1)
         num_pos = pos.long().sum(1,keepdim=True) #new sum needs to keep the same dim
+        # print('num pos: ', num_pos.size())
         num_neg = torch.clamp(self.negpos_ratio*num_pos, max=pos.size(1)-1)
+        # print('num neg: ', num_neg.size(), '\n')
         neg = idx_rank < num_neg.expand_as(idx_rank)
-
+        # print('neg ', neg.size())
         # Confidence Loss Including Positive and Negative Examples
         pos_idx = pos.unsqueeze(2).expand_as(conf_data)
         neg_idx = neg.unsqueeze(2).expand_as(conf_data)
@@ -105,7 +132,11 @@ class MultiBoxLoss(nn.Module):
 
         # Sum of losses: L(x,c,l,g) = (Lconf(x, c) + αLloc(x,l,g)) / N
 
-        N = num_pos.data.sum()
-        loss_l/=N
+        N = num_pos.data.sum().float()
+        # print('N ',  N)
+        # print('N type: ', N.dtype)
+        # # loss_c.float()
+        # print('loss_c type: ',  loss_c.dtype)
         loss_c/=N
+        loss_l/=N
         return loss_l,loss_c

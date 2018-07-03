@@ -55,9 +55,9 @@ __C.MODEL.IMAGE_SIZE = [300, 300]
 # number of the class for the model
 __C.MODEL.NUM_CLASSES = 21
 
-# FEATURE_LAYER to extract the proposed bounding box, 
-# the first dimension is the feature layer/type, 
-# while the second dimension is feature map channel. 
+# FEATURE_LAYER to extract the proposed bounding box,
+# the first dimension is the feature layer/type,
+# while the second dimension is feature map channel.
 __C.MODEL.FEATURE_LAYER = [[22, 34, 'S', 'S', '', ''], [512, 1024, 512, 256, 256, 256]]
 
 # STEPS for the proposed bounding box, if empty the STEPS = image_size / feature_map_size
@@ -69,7 +69,7 @@ __C.MODEL.SIZES = [0.2, 0.95]
 # ASPECT_RATIOS for the proposed bounding box, 1 is default contains
 __C.MODEL.ASPECT_RATIOS = [[2,3], [2, 3], [2, 3], [2, 3], [2], [2]]
 
-# 
+#
 __C.MODEL.CLIP = True
 
 # FSSD setting, NUM_FUSED for fssd
@@ -154,7 +154,7 @@ __C.POST_PROCESS.BACKGROUND_LABEL = __C.MATCHER.BACKGROUND_LABEL
 __C.POST_PROCESS.SCORE_THRESHOLD = 0.01
 __C.POST_PROCESS.IOU_THRESHOLD = 0.6
 __C.POST_PROCESS.MAX_DETECTIONS = 100
-__C.POST_PROCESS.VARIANCE = __C.MATCHER.VARIANCE 
+__C.POST_PROCESS.VARIANCE = __C.MATCHER.VARIANCE
 
 
 # ---------------------------------------------------------------------------- #
@@ -185,6 +185,7 @@ __C.DATASET.TEST_BATCH_SIZE = __C.TEST.BATCH_SIZE
 # number of workers to extract datas
 __C.DATASET.NUM_WORKERS = 8
 
+__C.DATASET.DATACLASSES = ()
 
 # ---------------------------------------------------------------------------- #
 # Export options
@@ -195,6 +196,16 @@ __C.LOG_DIR = __C.EXP_DIR
 __C.RESUME_CHECKPOINT = ''
 __C.CHECKPOINTS_PREFIX = '{}_{}_{}'.format(__C.MODEL.SSDS, __C.MODEL.NETS, __C.DATASET.DATASET)
 __C.PHASE = ['train', 'eval', 'test']
+
+# ---------------------------------------------------------------------------- #
+# Weight converter options
+# ---------------------------------------------------------------------------- #
+# Place outputs model under an experiments directory
+__C.WEIGHT_CONVERT = AttrDict()
+
+__C.WEIGHT_CONVERT.COMPS_TO_CONVERT = ''
+__C.WEIGHT_CONVERT.ORIGINAL_WEIGHT =''
+
 
 # def _merge_a_into_b(a, b):
 #   """Merge config dictionary a into config dictionary b, clobbering the
@@ -262,7 +273,7 @@ def update_cfg():
     __C.MATCHER.NUM_CLASSES = __C.MODEL.NUM_CLASSES
     __C.POST_PROCESS.NUM_CLASSES = __C.MODEL.NUM_CLASSES
     __C.POST_PROCESS.BACKGROUND_LABEL = __C.MATCHER.BACKGROUND_LABEL
-    __C.POST_PROCESS.VARIANCE = __C.MATCHER.VARIANCE 
+    __C.POST_PROCESS.VARIANCE = __C.MATCHER.VARIANCE
     __C.CHECKPOINTS_PREFIX = '{}_{}_{}'.format(__C.MODEL.SSDS, __C.MODEL.NETS, __C.DATASET.DATASET)
 
 

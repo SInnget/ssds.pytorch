@@ -18,7 +18,9 @@ class ObjectDetector:
         # Build model
         print('===> Building model')
         self.model, self.priorbox = create_model(cfg.MODEL)
-        self.priors = Variable(self.priorbox.forward(), volatile=True)
+        with torch.no_grad():
+            self.priors = Variable(self.priorbox.forward())
+        # self.priors = Variable(self.priorbox.forward(), volatile=True)
 
         # Print the model architecture and parameters
         if viz_arch is True:
@@ -39,7 +41,7 @@ class ObjectDetector:
             if self.half:
                 self.model = self.model.half()
                 self.priors = self.priors.half()
-        
+
         # Build preprocessor and detector
         self.preprocessor = preproc(cfg.MODEL.IMAGE_SIZE, cfg.DATASET.PIXEL_MEANS, -2)
         self.detector = Detect(cfg.POST_PROCESS, self.priors)
@@ -57,15 +59,18 @@ class ObjectDetector:
 
 
     def predict(self, img, threshold=0.6, check_time=False):
-        # make sure the input channel is 3 
+        # make sure the input channel is 3
         assert img.shape[2] == 3
         scale = torch.Tensor([img.shape[1::-1], img.shape[1::-1]])
-        
+
         _t = {'preprocess': Timer(), 'net_forward': Timer(), 'detect': Timer(), 'output': Timer()}
-        
+
         # preprocess image
         _t['preprocess'].tic()
-        x = Variable(self.preprocessor(img)[0].unsqueeze(0),volatile=True)
+        with torch.no_grad():
+            x = Variable(self.preprocessor(img)[0].unsqueeze(0))
+
+        # x = Variable(self.preprocessor(img)[0].unsqueeze(0),volatile=True)
         if self.use_gpu:
             x = x.cuda()
         if self.half:
@@ -81,7 +86,7 @@ class ObjectDetector:
         _t['detect'].tic()
         detections = self.detector.forward(out)
         detect_time = _t['detect'].toc()
-        
+
         # output
         _t['output'].tic()
         labels, scores, coords = [list() for _ in range(3)]
@@ -97,7 +102,7 @@ class ObjectDetector:
                 num+=1
         output_time = _t['output'].toc()
         total_time = preprocess_time + net_forward_time + detect_time + output_time
-        
+
         if check_time is True:
             return labels, scores, coords, (total_time, preprocess_time, net_forward_time, detect_time, output_time)
             # total_time = preprocess_time + net_forward_time + detect_time + output_time

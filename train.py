@@ -16,13 +16,16 @@ import torch.nn as nn
 import torch.backends.cudnn as cudnn
 from torch.autograd import Variable
 
+
+# print('cudas', torch.cuda.device_count())
 from lib.utils.config_parse import cfg_from_file
-from lib.ssds_train import train_model
+# print('testtest')
 
 def parse_args():
     """
     Parse input arguments
     """
+    # print('ihihi')
     parser = argparse.ArgumentParser(description='Train a ssds.pytorch network')
     parser.add_argument('--cfg', dest='config_file',
             help='optional config file', default=None, type=str)
@@ -34,10 +37,15 @@ def parse_args():
     args = parser.parse_args()
     return args
 
+
 def train():
     args = parse_args()
+    # print(args)
     if args.config_file is not None:
         cfg_from_file(args.config_file)
+
+    from lib.ssds_train import train_model
+
     train_model()
 
 if __name__ == '__main__':
