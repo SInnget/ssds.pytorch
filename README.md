@@ -97,7 +97,7 @@ e.g.
 
 Once the tensorboard successfully launched. You shall see
 
-![tensorboard activated](./doc/imgs/logpath.png)
+![tensorboard activated](./doc/imgs/activation.png)
 
 
 
