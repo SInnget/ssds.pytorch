@@ -164,7 +164,7 @@ __C.POST_PROCESS.VARIANCE = __C.MATCHER.VARIANCE
 __C.ROOT_DIR = osp.abspath(osp.join(osp.dirname(__file__), '..', '..'))
 
 __C.DATASET = AttrDict()
-# name of the dataset
+# name of the dataset, 'voc', 'coco' or 'homemade', choose 'homemade' if you want to train model on your own dataset
 __C.DATASET.DATASET = 'voc'
 # path of the dataset
 __C.DATASET.DATASET_DIR = osp.abspath(osp.join(__C.ROOT_DIR, 'data'))
@@ -184,7 +184,7 @@ __C.DATASET.TRAIN_BATCH_SIZE = __C.TRAIN.BATCH_SIZE
 __C.DATASET.TEST_BATCH_SIZE = __C.TEST.BATCH_SIZE
 # number of workers to extract datas
 __C.DATASET.NUM_WORKERS = 8
-
+# names of data classes, make them in a tuple, should be in lower case
 __C.DATASET.DATACLASSES = ()
 
 # ---------------------------------------------------------------------------- #
@@ -192,21 +192,26 @@ __C.DATASET.DATACLASSES = ()
 # ---------------------------------------------------------------------------- #
 # Place outputs model under an experiments directory
 __C.EXP_DIR = osp.abspath(osp.join(__C.ROOT_DIR, 'experiments/models/'))
+# Logger for tensorboard
 __C.LOG_DIR = __C.EXP_DIR
 __C.RESUME_CHECKPOINT = ''
 __C.CHECKPOINTS_PREFIX = '{}_{}_{}'.format(__C.MODEL.SSDS, __C.MODEL.NETS, __C.DATASET.DATASET)
 __C.PHASE = ['train', 'eval', 'test']
 
 # ---------------------------------------------------------------------------- #
-# Weight converter options
+# Weight converter options, for the transfer learning
 # ---------------------------------------------------------------------------- #
-# Place outputs model under an experiments directory
-__C.WEIGHT_CONVERT = AttrDict()
+# For the transfer learning, we read the weight and change corresponding part to meet the requirement of new model
+# The transfered model will save in the resume check point
 
+__C.WEIGHT_CONVERT = AttrDict()
+# The components we want to change
 __C.WEIGHT_CONVERT.COMPS_TO_CONVERT = ''
+# The path of original weight
 __C.WEIGHT_CONVERT.ORIGINAL_WEIGHT =''
 
 
+# Place outputs model under an experiments directory
 # def _merge_a_into_b(a, b):
 #   """Merge config dictionary a into config dictionary b, clobbering the
 #   options in b whenever they are also specified in a.

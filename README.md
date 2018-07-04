@@ -60,8 +60,46 @@ Change the configure file based on the note in [config_parse.py](./lib/utils/con
 | MobilenetV1           | 2.02ms  | 3.31ms  | 2.80ms | 3.84ms | 2.62ms |
 | MobilenetV2           | 3.35ms  | 4.69ms  | 4.05ms | 5.26ms | 4.00ms |
 
-(*-only calculate the all network inference time, without pre-processing & post-processing. 
+(*-only calculate the all network inference time, without pre-processing & post-processing.
 In fact, the speed of vgg is super impress me. Maybe it is caused by MobilenetV1 and MobilenetV2 is using -lite structure, which uses the seperate conv in the base and extra layers.)
+
+
+
+## Transfer learning/ training own data
+For the transfer learning, we need to do two steps, set up dataset path in configure, and weight convert to start training.
+
+### Datasets
+First of all,  we set cfg.DATASET.DATASET to be `homemade`, and set the DATACLASSES for this dataset in the configure.
+You may check `homemade_train.yml`.
+
+
+Second, the dataset should replace in the right location. The annotations xml(follow voc standard) `must` in `./data/HOMEMADE/Annotations`. The images `must` be placed in `./data/HOMEMADE/JPEGImages`. `HOMEMADE` maybe changed, it follows the name of DATASET_DIR.
+
+Third, execute `python3 make_file_lists.py --cfg=./experiments/cfgs/homemade_train.yml` homemade_train.yml can be replaced.
+
+Once the dataset are prepared, we convert the weight.
+
+### Weight converting
+Use weight_convert.py to convert the weights to initialize new model.
+Run `python3 weight_converter.py --cfg=./homemade_train.yml`, homemade_train.yml may be replaced by our own configure yml.
+
+### Training
+Once dataset preparation and weight converting were completed, just train it as before.
+e.g. `python train.py --cfg=./experiments/cfgs/rfb_lite_mobilenetv2_train_voc.yml`
+
+## Tensorboad Monitoring
+
+The tensorboardX records the necessary information in the tensorboard. To visualize the tensorboard, type `tensorboard --logdir LOG_DIR` in the ternimal.
+
+e.g.
+
+`tensorboard --logdir ./experiments/models/ssd_mobilenet_v2_voc.yml`
+
+Once the tensorboard successfully launched. You shall see
+
+![tensorboard activated](./doc/imgs/logpath.png)
+
+
 
 ## Visualization
 
@@ -83,6 +121,8 @@ In fact, the speed of vgg is super impress me. Maybe it is caused by MobilenetV1
 
 - visualize featuremap and grads (not satisfy me, does not give me any information. any suggestions? )
 ![feature_map_visualize](./doc/imgs/feature_map_visualize.png)
+
+
 
 ## TODO
 - prepare update to pytorch 0.4.0
