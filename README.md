@@ -99,7 +99,8 @@ Once the tensorboard successfully launched. You shall see
 
 ![tensorboard activated](./doc/imgs/activation.png)
 
-
+### Problem shooting
+Once you are unable to launch tensorboard, run `export LC_ALL=C` in terminal may help
 
 ## Visualization
 
