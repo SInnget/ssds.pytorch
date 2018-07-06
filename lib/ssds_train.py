@@ -36,10 +36,14 @@ class Solver(object):
 
         # Load data
         print('===> Loading data')
-        self.train_loader = load_data(cfg.DATASET, 'train') if 'train' in cfg.PHASE else None
-        self.eval_loader = load_data(cfg.DATASET, 'eval') if 'eval' in cfg.PHASE else None
-        self.test_loader = load_data(cfg.DATASET, 'test') if 'test' in cfg.PHASE else None
-        self.visualize_loader = load_data(cfg.DATASET, 'visualize') if 'visualize' in cfg.PHASE else None
+        self.train_loader = load_data(
+            cfg.DATASET, 'train') if 'train' in cfg.PHASE else None
+        self.eval_loader = load_data(
+            cfg.DATASET, 'eval') if 'eval' in cfg.PHASE else None
+        self.test_loader = load_data(
+            cfg.DATASET, 'test') if 'test' in cfg.PHASE else None
+        self.visualize_loader = load_data(
+            cfg.DATASET, 'visualize') if 'visualize' in cfg.PHASE else None
 
         # Build model
         print('===> Building model')
@@ -51,29 +55,37 @@ class Solver(object):
 
         # Utilize GPUs for computation
         self.use_gpu = torch.cuda.is_available()
+        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
+
+        # set up trainable params
+        print('Trainable scope: {}'.format(cfg.TRAIN.TRAINABLE_SCOPE))
+        trainable_param = self.trainable_param(cfg.TRAIN.TRAINABLE_SCOPE)
+        # print('hi', len(trainable_param))
+
+
+
         if self.use_gpu:
             print('Utilize GPUs for computation')
-            print('Have {} GPU available'.format( torch.cuda.device_count()))
-            self.model.cuda()
-            self.priors.cuda()
-            cudnn.benchmark = True
+            print('Have {} GPU available'.format(torch.cuda.device_count()))
             if torch.cuda.device_count() > 1:
                 print("Let's use {} GPUs".format(torch.cuda.device_count()))
-                self.model = torch.nn.DataParallel(self.model).module
-            # print(self.model.device)
+                self.model = torch.nn.DataParallel(self.model, device_ids=[0, 1, 2])
+            self.priors.to(device)
+            self.model.to(device)
+            cudnn.benchmark = True
 
         # Print the model architecture and parameters
         # print('Model architectures:\n{}\n'.format(self.model))
 
-        #print('Parameters and size:')
-        #for name, param in self.model.named_parameters():
-         #   print('{}: {}'.format(name, list(param.size())))
+        # print('Parameters and size:')
+        # # all_cuda = torch.device('cuda')
+        # # print(all_cuda))
+        # for name, param in self.model.named_parameters():
+        #     # param.to(all_cuda)
+        #     print('{}: {}, device {}'.format(name, list(param.size()), param.device))
 
         # print trainable scope
-        print('Trainable scope: {}'.format(cfg.TRAIN.TRAINABLE_SCOPE))
-
-        trainable_param = self.trainable_param(cfg.TRAIN.TRAINABLE_SCOPE)
-        # print(len(trainable_param))
         self.optimizer = self.configure_optimizer(
             trainable_param, cfg.TRAIN.OPTIMIZER)
 
@@ -293,8 +305,8 @@ class Solver(object):
                     self.model, self.visualize_loader, self.priorbox, self.writer, 0,  self.use_gpu)
 
     def train_epoch(self, model, data_loader, optimizer, criterion, writer, epoch, use_gpu):
-        model.train()
 
+        model.train()
         epoch_size = len(data_loader)
         batch_iterator = iter(data_loader)
 
@@ -305,9 +317,9 @@ class Solver(object):
         for iteration in iter(range((epoch_size))):
             images, targets = next(batch_iterator)
             if use_gpu:
-                images = Variable(images.cuda())
+                images = images.cuda()
                 with torch.no_grad():
-                    targets = [Variable(anno.cuda()) for anno in targets]
+                    targets = [anno.cuda() for anno in targets]
                 # targets = [Variable(anno.cuda(), volatile=True) for anno in targets]
             else:
                 images = Variable(images)
