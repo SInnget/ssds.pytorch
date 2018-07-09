@@ -11,7 +11,7 @@ MODEL:
 TRAIN:
   MAX_EPOCHS: 1000
   CHECKPOINTS_EPOCHS: 1
-  BATCH_SIZE: 128
+  BATCH_SIZE: 512
   TRAINABLE_SCOPE: 'base,norm,extras,loc,conf'
   RESUME_SCOPE: 'base,norm,extras,loc,conf'
   OPTIMIZER:
@@ -39,17 +39,17 @@ POST_PROCESS:
 
 DATASET:
   DATASET: 'homemade'
-  DATASET_DIR: './data/HOMEMADE' # FIX THIS, 'HOMEMADE' MAYBE CHANGED
-  TRAIN_SETS: [['2012', 'trainval']] # FIX THIS， DONT CHANGE IN ORDER TO READ THE DATA
-  TEST_SETS:  [['2012', 'trainval']] # FIX THIS, DONT CHANGE IN ORDER TO READ THE DATA
+  DATASET_DIR: './data/HOMEMADE' # MODIFY ON YOUR OWN, CREATE THE CORRESPONDING HOMEMADE2012 ON YOUR OWN
+  TRAIN_SETS: [['2012', 'trainval']] # FIX THIS
+  TEST_SETS:  [['2012', 'trainval']] # FIX THIS
   PROB: 0.6
-  DATACLASSES: ('__background__','nemo','gill') # all lowercase
+  DATACLASSES: ('__background__','nemo','gill') #   lowercase
 
 
 EXP_DIR: './experiments/models/fish'
 LOG_DIR: './experiments/models/fish'
 RESUME_CHECKPOINT: './weights/fish.pth'
-PHASE: ['visualize']
+PHASE: ['train']
 
 WEIGHT_CONVERT:
   ORIGINAL_WEIGHT: './weights/mobilenet_v2_ssd_lite_voc_73.2.pth'
