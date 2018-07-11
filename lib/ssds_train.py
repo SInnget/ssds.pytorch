@@ -312,18 +312,22 @@ class Solver(object):
         loc_loss = 0
         conf_loss = 0
         _t = Timer()
-
+        device = torch.device("cuda" if use_gpu else "cpu")
         for iteration in iter(range((epoch_size))):
             images, targets = next(batch_iterator)
-            if use_gpu:
-                images = images.cuda()
-                with torch.no_grad():
-                    targets = [anno.cuda() for anno in targets]
-                # targets = [Variable(anno.cuda(), volatile=True) for anno in targets]
-            else:
-                images = Variable(images)
-                with torch.no_grad():
-                    targets = [Variable(anno) for anno in targets]
+            images.to(device)
+            with torch.no_grad():
+                targets = [torch.Tensor(anno).to(device) for anno in targets]
+
+            # if use_gpu:
+            #     images = images.cuda()
+            #     with torch.no_grad():
+            #         targets = [anno.cuda() for anno in targets]
+            #     # targets = [Variable(anno.cuda(), volatile=True) for anno in targets]
+            # else:
+            #     images = Variable(images)
+            #     with torch.no_grad():
+            #         targets = [Variable(anno) for anno in targets]
                 # targets = [Variable(anno, volatile=True) for anno in targets]
             _t.tic()
             # forward
@@ -386,21 +390,15 @@ class Solver(object):
         score = [list() for _ in range(model.num_classes)]
         size = [list() for _ in range(model.num_classes)]
         npos = [0] * model.num_classes
-
+        device = torch.device('cuda' if use_gpu else 'cpu')
         for iteration in iter(range((epoch_size))):
             # for iteration in iter(range((10))):
             images, targets = next(batch_iterator)
-            if use_gpu:
-                images = Variable(images.cuda())
-                with torch.no_grad():
-                    targets = [Variable(anno.cuda()) for anno in targets]
-
-                # targets = [Variable(anno.cuda(), volatile=True) for anno in targets]
-            else:
-                images = Variable(images)
-                with torch.no_grad():
-                    targets = [Variable(anno.cuda()) for anno in targets]
-                # targets = [Variable(anno, volatile=True) for anno in targets]
+            print('type of images: {}'.format(type(images)))
+            print('type of targets: {}'.format(type(targets)))
+            images = images.to(device)
+            with torch.no_grad():
+                targets = [torch.Tensor(anno).to(device) for anno in targets]
 
             _t.tic()
             # forward
@@ -420,8 +418,8 @@ class Solver(object):
             label, score, npos, gt_label = cal_tp_fp(
                 detections, targets, label, score, npos, gt_label)
             size = cal_size(detections, targets, size)
-            loc_loss += loss_l.data[0]
-            conf_loss += loss_c.data[0]
+            loc_loss += loss_l.item()
+            conf_loss += loss_c.item()
 
             # log per iter
             log = '\r==>Eval: || {iters:d}/{epoch_size:d} in {time:.3f}s [{prograss}] || loc_loss: {loc_loss:.4f} cls_loss: {cls_loss:.4f}\r'.format(
@@ -524,20 +522,13 @@ class Solver(object):
 
         _t = Timer()
 
+
+        device = torch.device("cuda" if use_gpu else "cpu")
         for i in iter(range((num_images))):
             img = dataset.pull_image(i)
             scale = [img.shape[1], img.shape[0], img.shape[1], img.shape[0]]
-            if use_gpu:
-                with torch.no_grad():
-                    images = Variable(dataset.preproc(
-                        img)[0].unsqueeze(0).cuda())
-
-                # images = Variable(dataset.preproc(img)[0].unsqueeze(0).cuda(), volatile=True)
-            else:
-                with torch.no_grad():
-                    images = Variable(dataset.preproc(
-                        img)[0].unsqueeze(0).cuda())
-                # images = Variable(dataset.preproc(img)[0].unsqueeze(0), volatile=True)
+            with torch.no_grad():
+                images = torch.Tensor(dataset.preproc(img)[0].unsqueeze(0).to(device))
 
             _t.tic()
             # forward
@@ -593,14 +584,10 @@ class Solver(object):
         preproc = data_loader.dataset.preproc
         preproc.add_writer(writer, epoch)
         # preproc.p = 0.6
-
+        device = torch.device('cuda' if use_gpu else 'cpu')
         # preproc image & visualize preprocess prograss
         with torch.no_grad():
-            images = Variable(preproc(image, anno)[0].unsqueeze(0))
-
-        # images = Variable(preproc(image, anno)[0].unsqueeze(0), volatile=True)
-        if use_gpu:
-            images = images.cuda()
+            images = Variable(preproc(image, anno)[0].unsqueeze(0)).to(device)
 
         # visualize feature map in base and extras
         base_out = viz_module_feature_maps(
