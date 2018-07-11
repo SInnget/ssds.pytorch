@@ -55,7 +55,6 @@ class Solver(object):
 
         # Utilize GPUs for computation
         self.use_gpu = torch.cuda.is_available()
-        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
         # set up trainable params
@@ -65,12 +64,13 @@ class Solver(object):
 
 
 
+        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         if self.use_gpu:
             print('Utilize GPUs for computation')
             print('Have {} GPU available'.format(torch.cuda.device_count()))
             if torch.cuda.device_count() > 1:
                 print("Let's use {} GPUs".format(torch.cuda.device_count()))
-                self.model = torch.nn.DataParallel(self.model, device_ids=[0, 1, 2])
+                self.model = torch.nn.DataParallel(self.model)
             self.priors.to(device)
             self.model.to(device)
             cudnn.benchmark = True
@@ -317,7 +317,7 @@ class Solver(object):
             images, targets = next(batch_iterator)
             images.to(device)
             with torch.no_grad():
-                targets = [torch.Tensor(anno).to(device) for anno in targets]
+                targets = [anno.to(device) for anno in targets]
 
             # if use_gpu:
             #     images = images.cuda()
@@ -394,11 +394,9 @@ class Solver(object):
         for iteration in iter(range((epoch_size))):
             # for iteration in iter(range((10))):
             images, targets = next(batch_iterator)
-            print('type of images: {}'.format(type(images)))
-            print('type of targets: {}'.format(type(targets)))
             images = images.to(device)
             with torch.no_grad():
-                targets = [torch.Tensor(anno).to(device) for anno in targets]
+                targets = [anno.to(device) for anno in targets]
 
             _t.tic()
             # forward
