@@ -309,7 +309,6 @@ class Solver(object):
         model.train()
         epoch_size = len(data_loader)
         batch_iterator = iter(data_loader)
-
         loc_loss = 0
         conf_loss = 0
         _t = Timer()
@@ -324,7 +323,7 @@ class Solver(object):
             else:
                 images = Variable(images)
                 with torch.no_grad():
-                    targets = [Variable(anno.cuda()) for anno in targets]
+                    targets = [Variable(anno) for anno in targets]
                 # targets = [Variable(anno, volatile=True) for anno in targets]
             _t.tic()
             # forward

@@ -11,7 +11,7 @@ MODEL:
 TRAIN:
   MAX_EPOCHS: 1000
   CHECKPOINTS_EPOCHS: 1
-  BATCH_SIZE: 512
+  BATCH_SIZE: 64
   TRAINABLE_SCOPE: 'base,norm,extras,loc,conf'
   RESUME_SCOPE: 'base,norm,extras,loc,conf'
   OPTIMIZER:
@@ -44,6 +44,7 @@ DATASET:
   TEST_SETS:  [['2012', 'trainval']] # FIX THIS
   PROB: 0.6
   DATACLASSES: ('__background__','nemo','gill') #   lowercase
+  NUM_WORKERS: 0 # change it from 8 to 0 if you meet a problem with num of worker for dataloader
 
 
 EXP_DIR: './experiments/models/fish'
