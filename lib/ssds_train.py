@@ -76,7 +76,7 @@ class Solver(object):
             cudnn.benchmark = True
 
         # Print the model architecture and parameters
-        # print('Model architectures:\n{}\n'.format(self.model))
+        print('Model architectures:\n{}\n'.format(self.model))
 
         # print('Parameters and size:')
         # # all_cuda = torch.device('cuda')
@@ -128,36 +128,12 @@ class Solver(object):
         print(("=> loading checkpoint '{:s}'".format(resume_checkpoint)))
         checkpoint = torch.load(resume_checkpoint)
 
-        # print("=> Weigths in the checkpoints:")
-        # print([k for k, v in list(checkpoint.items())])
-
-        # remove the module in the parrallel model
+        # clean up, remove the 'module'. prefix in the parallel model， return a dict with pref without 'module.'
         if 'module.' in list(checkpoint.items())[0][0]:
+            print('data clearing by removing module. prefix.')
             pretrained_dict = {
                 '.'.join(k.split('.')[1:]): v for k, v in list(checkpoint.items())}
             checkpoint = pretrained_dict
-
-        # change the name of the weights which exists in other model
-        # change_dict = {
-        #         'conv1.weight':'base.0.weight',
-        #         'bn1.running_mean':'base.1.running_mean',
-        #         'bn1.running_var':'base.1.running_var',
-        #         'bn1.bias':'base.1.bias',
-        #         'bn1.weight':'base.1.weight',
-        #         }
-        # for k, v in list(checkpoint.items()):
-        #     for _k, _v in list(change_dict.items()):
-        #         if _k == k:
-        #             new_key = k.replace(_k, _v)
-        #             checkpoint[new_key] = checkpoint.pop(k)
-        # change_dict = {'layer1.{:d}.'.format(i):'base.{:d}.'.format(i+4) for i in range(20)}
-        # change_dict.update({'layer2.{:d}.'.format(i):'base.{:d}.'.format(i+7) for i in range(20)})
-        # change_dict.update({'layer3.{:d}.'.format(i):'base.{:d}.'.format(i+11) for i in range(30)})
-        # for k, v in list(checkpoint.items()):
-        #     for _k, _v in list(change_dict.items()):
-        #         if _k in k:
-        #             new_key = k.replace(_k, _v)
-        #             checkpoint[new_key] = checkpoint.pop(k)
 
         resume_scope = self.cfg.TRAIN.RESUME_SCOPE
         # extract the weights based on the resume scope
@@ -169,9 +145,18 @@ class Solver(object):
                         pretrained_dict[k] = v
                         break
             checkpoint = pretrained_dict
+        # print('Updated checkpoint')
+        # print([k for k, v in checkpoint.items()])
 
+        # match cleaned checkpoint with current state dict
+        # if current model has no 'module' prefix
         pretrained_dict = {
             k: v for k, v in checkpoint.items() if k in self.model.state_dict()}
+        # if current model has 'module' prefix
+        pretrained_dict_with_module_prefix = {
+            'module.'+ k: v for k, v in checkpoint.items() if 'module.'+k in self.model.state_dict()}
+        # mixed up these two dicts
+        pretrained_dict.update(pretrained_dict_with_module_prefix)
         # print("=> Resume weigths:")
         # print([k for k, v in list(pretrained_dict.items())])
 
@@ -181,9 +166,10 @@ class Solver(object):
         if len(unresume_dict) != 0:
             print("=> UNResume weigths:")
             print(unresume_dict)
-
+        # replacing new weights
         checkpoint.update(pretrained_dict)
-
+        # print('checkpoint to be loaded')
+        # print([k for k in checkpoint.keys()])
         return self.model.load_state_dict(checkpoint)
 
     def find_previous(self):
